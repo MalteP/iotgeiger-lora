@@ -3,6 +3,7 @@
 #include <hal/hal.h>
 #include <TinyBME280.h>
 #include "config.h"
+#include "led.h"
 #include "session.h"
 #include "counter.h"
 
@@ -40,14 +41,20 @@ void onEvent(ev_t ev) {
     LMIC_setLinkCheckMode(0);
     // Store session data & frame counter immediately
     session_changed(true);
+    // Deactivate LED
+    led_disable();
     break;
   case EV_TXCOMPLETE:
     Serial.println(F("Packet sent"));
     // Store session data & frame counter from time to time
     session_changed(false);
+    // Deactivate LED
+    led_disable();
     break;
   case EV_JOIN_TXCOMPLETE:
     Serial.println(F("Join failed"));
+    // Activate flashing LED to indicate error status
+    led_enable(LED_BLINK);
     break;
   default:
     break;
@@ -74,6 +81,8 @@ void geiger_send(uint16_t avg_cpm) {
       LMIC_setTxData2(1, payload.bytes_bme, sizeof(payload.bytes_bme), 0);
     }
     Serial.println(F("Packet queued"));
+    // Activate LED to indicate TX in progress
+    led_enable(LED_ON);
   }
 }
 
@@ -113,6 +122,9 @@ void setup() {
   // Reset the MAC state. Session and pending data transfers will be discarded.
   LMIC_reset();
 
+  // Initialize LED
+  led_setup();
+
   // Initialize network specific parameters
   session_setup();
 
@@ -123,11 +135,11 @@ void setup() {
   bme_status = bme.begin();
   if(!bme_status) {
     bme_status = bme.beginI2C(0x76);
-    if(bme_status) {
-      Serial.println(F("BME280 found"));
-    } else {
-      Serial.println(F("BME280 not found"));
-    }
+  }
+  if(bme_status) {
+    Serial.println(F("BME280 found"));
+  } else {
+    Serial.println(F("BME280 not found"));
   }
 }
 
@@ -136,4 +148,5 @@ void loop() {
   os_runloop_once();
   counter_loop();
   session_loop();
+  led_loop();
 }

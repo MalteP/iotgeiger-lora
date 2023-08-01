@@ -6,7 +6,7 @@
 
 #ifdef USE_OTAA
 
-// LoRaWAN OTAA AppEUI, application EUI in little endian format (LSB)
+// LoRaWAN OTAA AppEUI / JoinEUI, application or join EUI in little endian format (LSB)
 static const u1_t PROGMEM APPEUI[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 // LoRaWAN OTAA DevEUI, device EUI in little endian format (LSB)
