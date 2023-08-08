@@ -58,6 +58,10 @@ You might check the serial console for log messages of your IoT Geiger Counter b
 
 Remember that, once the LoRaWAN activation is completed, the session data is stored in FRAM and recovered at boot. If you need to change the data, it may be necessary to clear the FRAM.
 
+## Status LED
+
+The LED on the moteino will light up if a packet is being sent. It will blink if the OTAA activation fails.
+
 ## Further information
 
 https://www.maltepoeggel.de/?site=iotgeiger
