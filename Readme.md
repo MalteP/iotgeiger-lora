@@ -56,7 +56,7 @@ When everything is configured, simply plug the USB serial adapter into your Mote
 
 You might check the serial console for log messages of your IoT Geiger Counter by using the command "pio device monitor". The network will be joined immediately after power up. Measurement values will be transmitted every five minutes.
 
-Remember that, once the LoRaWAN activation is completed, the session data is stored in FRAM and recovered at boot. If you need to change the data, it may be necessary to clear the FRAM.
+Once the LoRaWAN activation is completed, the session data is stored in FRAM and recovered at boot. A hash value of config.h is included to detect configuration changes and invalidate the current session, forcing the device to re-activate.
 
 ## Status LED
 

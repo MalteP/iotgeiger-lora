@@ -8,6 +8,7 @@ uint8_t fram_crc8(const uint8_t *data, size_t len);
 // Global variables
 Adafruit_FRAM_SPI *fram = NULL;
 bool fram_found = false;
+uint16_t fram_magic = 0x4242;
 
 // Initialize FRAM
 bool fram_setup(void) {
@@ -33,8 +34,14 @@ bool fram_setup(void) {
   return true;
 }
 
+// Magic number as FRAM header, may be used as config version number
+void fram_setmagic(uint16_t magic) {
+  fram_magic = magic;
+}
+
 // Read FRAM data and validate CRC8 checksum
 bool fram_read(void *data, size_t length) {
+  uint16_t magic;
   uint8_t crc, crc2;
 
   // FRAM initialized?
@@ -42,14 +49,15 @@ bool fram_read(void *data, size_t length) {
     return false;
   }
 
-  // Read CRC from first byte, then read data
-  fram->read(0, (uint8_t *)&crc, sizeof(uint8_t));
-  fram->read(1, (uint8_t *)data, length);
+  // Read magic, CRC and data
+  fram->read(0, (uint8_t *)&magic, sizeof(uint16_t));
+  fram->read(2, (uint8_t *)&crc, sizeof(uint8_t));
+  fram->read(3, (uint8_t *)data, length);
 
-  // Calculate and validate checksum
+  // Check magic, calculate and validate checksum
   crc2 = fram_crc8((uint8_t *)data, length);
-  if(crc != crc2) {
-    Serial.println(F("FRAM checksum mismatch"));
+  if(magic != fram_magic || crc != crc2) {
+    Serial.println(F("FRAM data invalid"));
     memset(data, 0, length);
     return false;
   }
@@ -69,10 +77,13 @@ bool fram_write(void *data, size_t length) {
   // Calculate checksum and write data
   crc = fram_crc8((uint8_t *)data, length);
   fram->writeEnable(true);
-  fram->write(0, (uint8_t *)&crc, sizeof(uint8_t));
+  fram->write(0, (uint8_t *)&fram_magic, sizeof(uint16_t));
   fram->writeEnable(false);
   fram->writeEnable(true);
-  fram->write(1, (uint8_t *)data, length);
+  fram->write(2, (uint8_t *)&crc, sizeof(uint8_t));
+  fram->writeEnable(false);
+  fram->writeEnable(true);
+  fram->write(3, (uint8_t *)data, length);
   fram->writeEnable(false);
 
   return true;
@@ -86,7 +97,7 @@ bool fram_clear(size_t length) {
   }
 
   fram->writeEnable(true);
-  for(size_t pos=0; pos<length; pos++) {
+  for(size_t pos = 0; pos < length; pos++) {
     fram->write8(--length, 0x00);
   }
   fram->writeEnable(false);

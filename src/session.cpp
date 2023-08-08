@@ -39,6 +39,12 @@ void session_setup(void) {
   // Initialize FRAM
   fram_setup();
 
+#ifdef CONFIG_H_CHECKSUM
+  // Set FRAM magic number according to last four hex digits of SHA256 config hash
+  // to invalidate the current session if OTAA keys are changed (see scripts/auto_config_h_checksum.py)
+  fram_setmagic(CONFIG_H_CHECKSUM);
+#endif
+
   // Restore frame counter and session parameters
   session_restore();
 

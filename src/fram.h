@@ -10,6 +10,7 @@
 
 // Functions
 bool fram_setup(void);
+void fram_setmagic(uint16_t magic);
 bool fram_read(void *data, size_t length);
 bool fram_write(void *data, size_t length);
 bool fram_clear(size_t length);
