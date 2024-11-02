@@ -123,7 +123,7 @@ void session_defaults(void) {
 #endif
 
   // Compensate for clock skew
-  LMIC_setClockError(MAX_CLOCK_ERROR * 10 / 100);
+  LMIC_setClockError(MAX_CLOCK_ERROR * 1 / 100);
 }
 
 // Setup ABP default channels
