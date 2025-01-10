@@ -69,6 +69,10 @@ void session_changed(bool save_now) {
 // Called from main loop
 void session_loop(void) {
   if(fram_session_changed >= SESSION_SAVE_CHANGES) {
+    // Skip if there are LMIC operations in progress
+    if(!LMIC_queryTxReady()) {
+      return;
+    }
     fram_session_changed = 0;
     session_save();
   }
