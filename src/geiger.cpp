@@ -64,17 +64,16 @@ void onEvent(ev_t ev) {
 // Generate payload and send LoRa packet
 void geiger_send(uint16_t avg_cpm) {
   payload_data_t payload;
-
-  // Prepare payload
-  payload.avg_cpm = avg_cpm;
-  if(bme_status) {
-    payload.temperature = bme.readFixedTempC();
-    payload.humidity = bme.readFixedHumidity();
-    payload.pressure = bme.readFixedPressure();
-  }
-
-  // Send data
+  // Possible to send data?
   if(!(LMIC.opmode & OP_TXRXPEND)) {
+    // Prepare payload
+    payload.avg_cpm = avg_cpm;
+    if(bme_status) {
+      payload.temperature = bme.readFixedTempC();
+      payload.humidity = bme.readFixedHumidity();
+      payload.pressure = bme.readFixedPressure();
+    }
+    // Send data
     if(!bme_status) {
       LMIC_setTxData2(1, payload.bytes, sizeof(payload.bytes), 0);
     } else {
