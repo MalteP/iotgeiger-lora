@@ -88,25 +88,28 @@ void geiger_send(uint16_t avg_cpm) {
 // Callback function for counter_loop(), will be called if new measurement data is available (every minute)
 // As the LoRa duty cyle is limited, data is averaged and sent if NO_VALUES is reached
 void geiger_callback(uint16_t value) {
-  static volatile uint16_t values[NO_VALUES];
-  static volatile uint8_t value_pos;
-  uint32_t average = 0;
+  static volatile uint8_t value_cnt = 0;
+  static volatile uint32_t cumulative = 0;
+  uint16_t average;
 
   Serial.print(F("CPM: "));
   Serial.println(value);
 
-  values[value_pos++] = value;
-  if(value_pos >= NO_VALUES) {
-    value_pos = 0;
-    for(uint8_t pos = 0; pos < NO_VALUES; pos++) {
-      average += values[pos];
-    }
-    average = average / NO_VALUES;
+  // Sum up geiger pulses
+  cumulative += value;
+
+  if(++value_cnt >= NO_VALUES) {
+    value_cnt = 0;
+
+    // Calculate average and clear cumulative count
+    average = cumulative / NO_VALUES;
+    cumulative = 0;
 
     Serial.print(F("AVG: "));
     Serial.println(average);
 
-    geiger_send((uint16_t)average);
+    // Transmit average cpm
+    geiger_send(average);
   }
 }
 
