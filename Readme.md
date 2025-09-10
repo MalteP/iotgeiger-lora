@@ -44,7 +44,7 @@ Please follow the guides on platformio.org to either install [PlatformIO core](h
 
 ## Burning the bootloader
 
-As the DualOptiboot bootloader did not work in my setup, I suggest flashing the default Arduino bootloader. To do that simply connect MISO, MOSI, SCK, +3.3V and GND of your USBASP to the Moteino. Please make sure the programmer is set to 3.3V voltage, as the RFM95W is *not* 5V tolerant! If the RFM95W and FRAM chip are already soldered in, you might need pull-up resistors on the NSS and /CS lines (D10, D8) as well. After that, just execute "pio run -t bootloader -e isp16mhz" (or isp8mhz) to program bootloader and fusebits.
+As the DualOptiboot bootloader did not work in my setup, I switched to Urboot, the default bootloader of the MiniCore Arduino framework used. This bootloader is also much smaller, leaving more flash memory available for the firmware. To flash it simply connect MISO, MOSI, SCK, +3.3V and GND of your USBASP to the Moteino. Please make sure the programmer is set to 3.3V voltage, as the RFM95W is *not* 5V tolerant! If the RFM95W and FRAM chip are already soldered in, you might need pull-up resistors on the NSS and /CS lines (D10, D8) as well. After that, just execute "pio run -t bootloader -e isp16mhz" (or isp8mhz) to program bootloader and fusebits.
 
 ## Configuring the LoRaWAN keys & network stack
 
