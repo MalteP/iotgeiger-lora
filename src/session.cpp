@@ -47,13 +47,6 @@ void session_setup(void) {
 
   // Restore frame counter and session parameters
   session_restore();
-
-#ifdef USE_OTAA
-  // Join network if no session is set
-  if(LMIC.devaddr == 0) {
-    LMIC_startJoining();
-  }
-#endif
 }
 
 // Called if session data is changed, may be saved directly

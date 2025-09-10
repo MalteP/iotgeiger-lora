@@ -143,6 +143,14 @@ void setup() {
   } else {
     Serial.println(F("BME280 not found"));
   }
+
+#ifdef USE_OTAA
+  // Join network if no session is set
+  if(LMIC.devaddr == 0) {
+    LMIC_startJoining();
+    led_enable(LED_ON);
+  }
+#endif
 }
 
 // Arduino main loop
