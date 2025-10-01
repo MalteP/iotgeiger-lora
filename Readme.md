@@ -12,13 +12,15 @@ A JavaScript payload decoder tested with TheThingsNetwork v3 and ChirpStack v4 i
 
 Besides of the IoT Geiger Counter board, the following components are needed:
 
-- [Moteino R6](https://lowpowerlab.com/guide/moteino/) (16MHz or 8MHz variant, latter requires the 3.3V LDO to be installed)
+- [Moteino R6](https://lowpowerlab.com/guide/moteino/) (8MHz or 16MHz[^1] variant, the former requires the 3.3V LDO to be installed)
 - RFM95W LoRa Module
 - MB85RS64T SPI FRAM (strongly recommended for LoRaWAN session data storage)
 - BME280 temperature, humidity, barometric pressure sensor (optional)
-- u.fl jack & 868 MHz LoRa antenna
+- u.fl jack & 868MHz LoRa antenna
 - USB serial adapter with 5V VCC and 3.3V logic level for programming ([Moteino FTDI Adapter](https://lowpowerlab.com/shop/product/90), [Adafruit FTDI Friend](https://www.adafruit.com/product/284) or my [Serial Adapter](https://github.com/MalteP/Serial-Adapter))
 - Atmel AVR ISP for bootloader burning (optional, 3.3V, USBASP or similar)
+
+[^1]: 16MHz at 3.3V is not within the ATMega328P specification and thus not recommended
 
 ## Implementation
 
@@ -28,9 +30,11 @@ The LoRaWAN implementation supports OTAA and ABP. Session data (e.g. session key
 
 To count the pulses of the GM tube, D5 (Timer 1) is used. Since Timer 0 is occupied by the Arduino libraries, Timer 2 serves as clock source for the gate time. By counting the overflows, a 60s interval can be generated to read and reset the current counter value.
 
-Due to restrictions of the 868MHz ISM band, the transmission time per hour is limited. To meet these Duty Cycle requirements, data is collected over a five-minute interval and an average CPM value is calculated and sent.
+Due to restrictions of the 868MHz ISM band, the transmission time per hour is limited. To meet these Duty Cycle requirements, data is collected over a user-defined interval, and an average CPM value is calculated and sent.
 
-If a BME280 sensor is connected, temperature, humidity and barometric pressure data is also included in the transmission.
+If a BME280 sensor is connected, temperature, humidity and barometric pressure data is also included.
+
+The transmission interval can be set from 5 to 60 minutes. It is possible to adjust it remotely by sending an downlink packet.
 
 ## Preparing the hardware
 
@@ -44,7 +48,7 @@ Please follow the guides on platformio.org to either install [PlatformIO core](h
 
 ## Burning the bootloader
 
-As the DualOptiboot bootloader did not work in my setup, I switched to Urboot, the default bootloader of the MiniCore Arduino framework used. This bootloader is also much smaller, leaving more flash memory available for the firmware. To flash it simply connect MISO, MOSI, SCK, +3.3V and GND of your USBASP to the Moteino. Please make sure the programmer is set to 3.3V voltage, as the RFM95W is *not* 5V tolerant! If the RFM95W and FRAM chip are already soldered in, you might need pull-up resistors on the NSS and /CS lines (D10, D8) as well. After that, just execute "pio run -t bootloader -e isp16mhz" (or isp8mhz) to program bootloader and fusebits.
+As the DualOptiboot bootloader did not work in my setup, I switched to Urboot, the default bootloader of the MiniCore Arduino framework used. This bootloader is also much smaller, leaving more flash memory available for the firmware. To flash it simply connect MISO, MOSI, SCK, +3.3V and GND of your USBASP to the Moteino. Please make sure the programmer is set to 3.3V voltage, as the RFM95W is *not* 5V tolerant! If the RFM95W and FRAM chip are already soldered in, you might need pull-up resistors on the NSS and /CS lines (D10, D8) as well. After that, just execute "pio run -t bootloader -e isp8mhz" (or isp16mhz) to program bootloader and fusebits.
 
 ## Configuring the LoRaWAN keys & network stack
 
@@ -52,7 +56,7 @@ Copy the file [src/config.h.example](src/config.h.example) to src/config.h. Then
 
 ## Flashing the firmware
 
-When everything is configured, simply plug the USB serial adapter into your Moteino. Then execute "pio run -t upload -e moteino16mhz" (or moteino8mhz) to program the firmware.
+When everything is configured, simply plug the USB serial adapter into your Moteino. Then execute "pio run -t upload -e moteino8mhz" (or moteino16mhz) to program the firmware.
 
 You might check the serial console for log messages of your IoT Geiger Counter by using the command "pio device monitor". The network will be joined immediately after power up. Measurement values will be transmitted every five minutes.
 
@@ -61,6 +65,10 @@ Once the LoRaWAN activation is completed, the session data is stored in FRAM and
 ## Status LED
 
 The LED on the moteino will light up if a packet is being sent. It will blink if the OTAA activation fails.
+
+## Remote configuration
+
+The interval may be adjusted at runtime by transmitting a downlink packet. To change it, just send an 8-bit unsigned integer value representing the desired time span in minutes to fPort 1. For example, the hexadecimal value 0F would result in a 15 minute interval. The option to send such a packet can be found in TTN under "Messaging" or in Chirpstack under "Queue".
 
 ## Further information
 
