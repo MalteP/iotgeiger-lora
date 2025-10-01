@@ -11,8 +11,8 @@
 // Functions
 bool fram_setup(void);
 void fram_setmagic(uint16_t magic);
-bool fram_read(void *data, size_t length);
-bool fram_write(void *data, size_t length);
+bool fram_read(uint32_t offset, void *data, size_t length);
+bool fram_write(uint32_t offset, void *data, size_t length);
 bool fram_clear(size_t length);
 
 #endif

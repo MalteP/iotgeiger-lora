@@ -6,6 +6,7 @@
 #include "config.h"
 #include "session.h"
 #include "fram.h"
+#include "settings.h"
 
 // LMIC callbacks for reading OTAA keys
 #ifdef USE_OTAA
@@ -30,6 +31,8 @@ static uint8_t fram_session_changed = 0;
 // Internal functions
 void session_save(void);
 void session_restore(void);
+void session_save_extra(void);
+void session_restore_extra(void);
 void session_defaults(void);
 void session_defaults_abp_channels(void);
 void session_resetduty(void);
@@ -73,8 +76,9 @@ void session_loop(void) {
 
 // Save LoRa session parameters
 void session_save(void) {
-  bool fram_status = fram_write(&LMIC, sizeof(lmic_t));
+  bool fram_status = fram_write(SESSION_FRAM_LMIC_OFFSET, &LMIC, sizeof(lmic_t));
   if(fram_status) {
+    session_save_extra();
     Serial.println(F("Session stored"));
   } else {
     Serial.println(F("Session store failed"));
@@ -84,13 +88,29 @@ void session_save(void) {
 // Restore LoRa session parameters
 void session_restore(void) {
   // Fetch OTAA activation & frame counters from FRAM memory
-  bool fram_status = fram_read(&LMIC, sizeof(lmic_t));
+  bool fram_status = fram_read(SESSION_FRAM_LMIC_OFFSET, &LMIC, sizeof(lmic_t));
   if(fram_status) {
+    session_restore_extra();
     session_resetduty();
     Serial.println(F("Session restored"));
   } else {
     session_defaults();
     Serial.println(F("Session restore failed"));
+  }
+}
+
+// Save application specific data
+void session_save_extra(void) {
+  session_userdata_t data;
+  data.interval = settings_get_interval();
+  fram_write(SESSION_FRAM_USER_OFFSET, &data, sizeof(session_userdata_t));
+}
+
+// Restore application specific data
+void session_restore_extra(void) {
+  session_userdata_t data;
+  if(fram_read(SESSION_FRAM_USER_OFFSET, &data, sizeof(session_userdata_t))) {
+    settings_set_interval(data.interval);
   }
 }
 

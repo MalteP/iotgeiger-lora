@@ -33,7 +33,7 @@ static const u4_t DEVADDR = 0x00000000;
 // TX datarate (will be ignored in OTAA mode)
 #define TX_DATARATE DR_SF7
 
-// Number of values for CPM averaging (minutes)
+// Default number of values for CPM averaging (minutes)
 #define NO_VALUES 5
 
 // Changes until session data is saved to FRAM (to reduce write cycles)

@@ -6,6 +6,7 @@
 #include "led.h"
 #include "session.h"
 #include "counter.h"
+#include "settings.h"
 
 // LMIC pin mapping
 const lmic_pinmap lmic_pins = {
@@ -32,6 +33,10 @@ tiny::BME280 bme;
 // Set true if sensor is detected
 bool bme_status;
 
+// Uplink / downlink functions
+bool geiger_send(void);
+void geiger_receive(void);
+
 // LMIC event handler
 void onEvent(ev_t ev) {
   switch(ev) {
@@ -50,6 +55,10 @@ void onEvent(ev_t ev) {
     session_changed(false);
     // Deactivate LED
     led_disable();
+    // Check downlink data
+    if(LMIC.dataLen) {
+      geiger_receive();
+    }
     break;
   case EV_JOIN_TXCOMPLETE:
     Serial.println(F("Join failed"));
@@ -85,6 +94,19 @@ void geiger_send(uint16_t avg_cpm) {
   }
 }
 
+// Handle downlink payload
+void geiger_receive(void) {
+  switch(LMIC.frame[LMIC.dataBeg - 1]) {
+  case 1: // fPort 1 - Update tx interval
+    if(LMIC.dataLen == 1) {
+      uint8_t value = LMIC.frame[LMIC.dataBeg];
+      settings_set_interval(value);
+      session_changed(true);
+    }
+    break;
+  }
+}
+
 // Callback function for counter_loop(), will be called if new measurement data is available (every minute)
 // As the LoRa duty cyle is limited, data is averaged and sent if NO_VALUES is reached
 void geiger_callback(uint16_t value) {
@@ -98,11 +120,10 @@ void geiger_callback(uint16_t value) {
   // Sum up geiger pulses
   cumulative += value;
 
-  if(++value_cnt >= NO_VALUES) {
-    value_cnt = 0;
-
+  if(++value_cnt >= settings_get_interval()) {
     // Calculate average and clear cumulative count
-    average = cumulative / NO_VALUES;
+    average = cumulative / value_cnt;
+    value_cnt = 0;
     cumulative = 0;
 
     Serial.print(F("AVG: "));
@@ -126,6 +147,9 @@ void setup() {
 
   // Initialize LED
   led_setup();
+
+  // Load user settings
+  settings_init();
 
   // Initialize network specific parameters
   session_setup();

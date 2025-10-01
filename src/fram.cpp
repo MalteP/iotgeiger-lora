@@ -40,7 +40,7 @@ void fram_setmagic(uint16_t magic) {
 }
 
 // Read FRAM data and validate CRC8 checksum
-bool fram_read(void *data, size_t length) {
+bool fram_read(uint32_t offset, void *data, size_t length) {
   uint16_t magic;
   uint8_t crc, crc2;
 
@@ -50,9 +50,9 @@ bool fram_read(void *data, size_t length) {
   }
 
   // Read magic, CRC and data
-  fram->read(0, (uint8_t *)&magic, sizeof(uint16_t));
-  fram->read(2, (uint8_t *)&crc, sizeof(uint8_t));
-  fram->read(3, (uint8_t *)data, length);
+  fram->read(offset, (uint8_t *)&magic, sizeof(uint16_t));
+  fram->read(offset + 2, (uint8_t *)&crc, sizeof(uint8_t));
+  fram->read(offset + 3, (uint8_t *)data, length);
 
   // Check magic, calculate and validate checksum
   crc2 = fram_crc8((uint8_t *)data, length);
@@ -66,7 +66,7 @@ bool fram_read(void *data, size_t length) {
 }
 
 // Write CRC and data to FRAM
-bool fram_write(void *data, size_t length) {
+bool fram_write(uint32_t offset, void *data, size_t length) {
   uint8_t crc;
 
   // FRAM initialized?
@@ -77,13 +77,13 @@ bool fram_write(void *data, size_t length) {
   // Calculate checksum and write data
   crc = fram_crc8((uint8_t *)data, length);
   fram->writeEnable(true);
-  fram->write(0, (uint8_t *)&fram_magic, sizeof(uint16_t));
+  fram->write(offset + 0, (uint8_t *)&fram_magic, sizeof(uint16_t));
   fram->writeEnable(false);
   fram->writeEnable(true);
-  fram->write(2, (uint8_t *)&crc, sizeof(uint8_t));
+  fram->write(offset + 2, (uint8_t *)&crc, sizeof(uint8_t));
   fram->writeEnable(false);
   fram->writeEnable(true);
-  fram->write(3, (uint8_t *)data, length);
+  fram->write(offset + 3, (uint8_t *)data, length);
   fram->writeEnable(false);
 
   return true;
